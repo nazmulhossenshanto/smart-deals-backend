@@ -32,7 +32,11 @@ async function run (){
       const db = client.db('smart_db');
       const productsCollection = db.collection('products');
 
-
+    // get products from db
+    app.get('/products', async(req, res)=>{
+      const products = await productsCollection.find().toArray();
+      res.send(products);
+    })
 
 
       // create product into db
