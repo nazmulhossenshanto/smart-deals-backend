@@ -36,6 +36,14 @@ async function run (){
     app.get('/products', async(req, res)=>{
       const products = await productsCollection.find().toArray();
       res.send(products);
+    });
+
+    // get single products from db
+    app.get('/products/:id', async(req, res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await productsCollection.findOne(query);
+      res.send(result)
     })
 
 
