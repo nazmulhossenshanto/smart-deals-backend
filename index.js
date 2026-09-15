@@ -54,6 +54,22 @@ async function run (){
         console.log( 'product from server', result);
         res.send(result)
       });
+
+      // update a product from db
+      app.patch('/products/:id', async(req, res)=>{
+        const id = req.params.id;
+        const query = {_id: new ObjectId(id)};
+        const updatedProduct = req.body;
+        const update = {
+          $set: {
+            name : updatedProduct.name,
+            price: updatedProduct.price
+          }
+        };
+        const result = await productsCollection.updateOne(query, update);
+        res.send(result);
+      })
+
       // delete product from db
       app.delete('/products/:id', async(req, res)=>{
         const id = req.params.id;
