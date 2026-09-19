@@ -32,7 +32,21 @@ async function run() {
     // create product database into mongo db
     const db = client.db("smart_db");
     const productsCollection = db.collection("products");
-    const bidsCollection = db.collection("bids");
+    const bidsCollection = db.collection("bids"); 
+    const usersCollection = db.collection('users');
+
+    // create user into db
+    app.post('/users', async(req, res)=>{
+      const newUser = req.body;
+      const result = await usersCollection.insertOne(newUser);
+      res.send(result)
+
+    });
+    // get all users from db
+    app.get('/users', async(req, res)=>{
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    })
 
     // get all  products from db
     app.get("/products", async (req, res) => {
