@@ -52,8 +52,16 @@ async function run() {
       const uid = req.params.uid;
       const result = await usersCollection.findOne({uid});
       res.send(result)
-
-    })
+    });
+    // update an user into db
+    app.patch('/users/:uid', async(req, res)=>{
+      const uid = req.params.uid;
+      const updatedUser = {
+        $set: req.body
+      };
+      const result = await usersCollection.updateOne(uid, updatedUser);
+      res.send(result)
+    });
 
     // get all  products from db
     app.get("/products", async (req, res) => {
