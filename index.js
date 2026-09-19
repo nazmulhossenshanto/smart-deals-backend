@@ -62,6 +62,12 @@ async function run() {
       const result = await usersCollection.updateOne(uid, updatedUser);
       res.send(result)
     });
+    // delete user from db
+    app.delete('/users/:uid', async(req, res)=>{
+      const uid = req.params.uid;
+      const result = await usersCollection.deleteOne({uid});
+      res.send(result)
+    })
 
     // get all  products from db
     app.get("/products", async (req, res) => {
