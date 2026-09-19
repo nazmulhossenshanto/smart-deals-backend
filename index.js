@@ -46,6 +46,13 @@ async function run() {
     app.get('/users', async(req, res)=>{
       const result = await usersCollection.find().toArray();
       res.send(result);
+    });
+    // get single user from db
+    app.get('/users/:uid', async(req, res)=>{
+      const uid = req.params.uid;
+      const result = await usersCollection.findOne({uid});
+      res.send(result)
+
     })
 
     // get all  products from db
