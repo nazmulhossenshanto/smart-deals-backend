@@ -1,15 +1,17 @@
-const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+import { MongoClient, ServerApiVersion, ObjectId } from "mongodb";
 
-const express = require("express");
-const cors = require("cors");
+import express, { json } from "express";
+import cors from "cors";
 const app = express();
+import dotenv from 'dotenv'
 const port = process.env.PORT || 3000;
 app.use(cors());
-app.use(express.json());
-
+app.use(json());
+dotenv.config()
+console.log('env :', process.env.DB_USER);
 // connect to mongo db
 const uri =
-  "mongodb+srv://smart_deals_users_db:HlUGPxm6csupqNX6@cluster0.pnssve1.mongodb.net/?appName=Cluster0";
+  `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.pnssve1.mongodb.net/?appName=Cluster0`;
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -32,42 +34,41 @@ async function run() {
     // create product database into mongo db
     const db = client.db("smart_db");
     const productsCollection = db.collection("products");
-    const bidsCollection = db.collection("bids"); 
-    const usersCollection = db.collection('users');
+    const bidsCollection = db.collection("bids");
+    const usersCollection = db.collection("users");
 
     // create user into db
-    app.post('/users', async(req, res)=>{
+    app.post("/users", async (req, res) => {
       const newUser = req.body;
       const result = await usersCollection.insertOne(newUser);
-      res.send(result)
-
+      res.send(result);
     });
     // get all users from db
-    app.get('/users', async(req, res)=>{
+    app.get("/users", async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
     // get single user from db
-    app.get('/users/:uid', async(req, res)=>{
+    app.get("/users/:uid", async (req, res) => {
       const uid = req.params.uid;
-      const result = await usersCollection.findOne({uid});
-      res.send(result)
+      const result = await usersCollection.findOne({ uid });
+      res.send(result);
     });
     // update an user into db
-    app.patch('/users/:uid', async(req, res)=>{
+    app.patch("/users/:uid", async (req, res) => {
       const uid = req.params.uid;
       const updatedUser = {
-        $set: req.body
+        $set: req.body,
       };
-      const result = await usersCollection.updateOne(uid, updatedUser);
-      res.send(result)
+      const result = await usersCollection.updateOne({ uid }, updatedUser);
+      res.send(result);
     });
     // delete user from db
-    app.delete('/users/:uid', async(req, res)=>{
+    app.delete("/users/:uid", async (req, res) => {
       const uid = req.params.uid;
-      const result = await usersCollection.deleteOne({uid});
-      res.send(result)
-    })
+      const result = await usersCollection.deleteOne({ uid });
+      res.send(result);
+    });
 
     // get all  products from db
     app.get("/products", async (req, res) => {
@@ -89,6 +90,15 @@ async function run() {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await productsCollection.findOne(query);
+      res.send(result);
+    });
+
+    // get all bid for a single product
+    app.get("/products/bids/:productId", async (req, res) => {
+      const productId = req.params.productId;
+      const query = { product: productId };
+      const cursor = bidsCollection.find(query).sort({ bid_price: -1 });
+      const result = await cursor.toArray();
       res.send(result);
     });
 
@@ -144,38 +154,34 @@ async function run() {
       res.send(result);
     });
 
-    // get a single bids 
+    // get a single bids
     app.get("/bids/:id", async (req, res) => {
-      const id = req.params.id; 
+      const id = req.params.id;
       const query = {
         _id: id,
-      }; 
-      const result = await bidsCollection.findOne(query); 
+      };
+      const result = await bidsCollection.findOne(query);
 
       res.send(result);
     });
 
     // update a bid
-    app.patch('/bids/:id', async (req, res)=>{
+    app.patch("/bids/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id: id};
+      const query = { _id: id };
       const updatedBid = {
-        $set: req.body
+        $set: req.body,
       };
-      const result = await bidsCollection.updateOne(query, updatedBid)
-      res.send(result)
-    })
-    // delete a bid 
-    app.delete('/bids/:id', async(req, res)=>{
+      const result = await bidsCollection.updateOne(query, updatedBid);
+      res.send(result);
+    });
+    // delete a bid
+    app.delete("/bids/:id", async (req, res) => {
       const id = req.params.id;
-      const query = {_id: id};
+      const query = { _id: new ObjectId(id) };
       const result = await bidsCollection.deleteOne(query);
-      res.send(result)
-    })
-
-
-
-
+      res.send(result);
+    });
   } finally {
   }
 }
