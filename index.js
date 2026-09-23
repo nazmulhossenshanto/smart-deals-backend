@@ -4,11 +4,42 @@ import express, { json } from "express";
 import cors from "cors";
 const app = express();
 import dotenv from 'dotenv'
+dotenv.config()
+import admin, { cert } from "firebase-admin";
 const port = process.env.PORT || 3000;
+
+import serviceAccount from "./firebase-admin-key.json" with { type: "json" };
+import { getAuth } from "firebase-admin/auth";
+admin.initializeApp({
+  credential: cert(serviceAccount)
+});
 app.use(cors());
 app.use(json());
-dotenv.config()
-console.log('env :', process.env.DB_USER);
+
+
+const logger = (req, res, next)=>{
+  console.log('logging information');
+  next()
+}
+const verifyFirebaseToken= async(req, res, next)=>{
+    if(!req.headers.authorization){
+      return res.status(401).send({message: 'unauthorized access '})
+    }
+
+    const token = req.headers.authorization.split(' ')[1];
+    if(!token){
+       return res.status(401).send({message: 'unauthorized access '})
+    }
+    try {
+      const userInfo = await getAuth().verifyIdToken(token);
+      console.log('after validation', userInfo);
+      next()
+      
+    } catch {
+      return res.status(401).send({message: 'unauthorized access '})
+    }
+}
+
 // connect to mongo db
 const uri =
   `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.pnssve1.mongodb.net/?appName=Cluster0`;
@@ -72,12 +103,18 @@ async function run() {
 
     // get all  products from db
     app.get("/products", async (req, res) => {
-      const products = await productsCollection.find().toArray();
+      const email = req.query.email;
+      const query = {};
+      if(email){
+        query.email = email
+      }
+      const products = await productsCollection.find(query).toArray();
       res.send(products);
     });
 
     // get latest products
     app.get("/latest-products", async (req, res) => {
+      
       const result = await productsCollection
         .find()
         .sort({ price_min: 1 })
@@ -105,8 +142,7 @@ async function run() {
     // create product into db
     app.post("/products", async (req, res) => {
       const newUser = req.body;
-      const result = await productsCollection.insertOne(newUser);
-      console.log("product from server", result);
+      const result = await productsCollection.insertOne(newUser); 
       res.send(result);
     });
 
@@ -143,7 +179,7 @@ async function run() {
     });
     // get all bids
 
-    app.get("/bids", async (req, res) => {
+    app.get("/bids",verifyFirebaseToken, async (req, res) => { 
       const email = req.query.email;
       const query = {};
       if (email) {
