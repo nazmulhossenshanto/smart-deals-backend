@@ -6,6 +6,7 @@ const app = express();
 import dotenv from 'dotenv'
 dotenv.config()
 import admin, { cert } from "firebase-admin";
+import jwt from 'jsonwebtoken'
 const port = process.env.PORT || 3000;
 
 import serviceAccount from "./firebase-admin-key.json" with { type: "json" };
@@ -21,24 +22,7 @@ const logger = (req, res, next)=>{
   console.log('logging information');
   next()
 }
-const verifyFirebaseToken= async(req, res, next)=>{
-    if(!req.headers.authorization){
-      return res.status(401).send({message: 'unauthorized access '})
-    }
-
-    const token = req.headers.authorization.split(' ')[1];
-    if(!token){
-       return res.status(401).send({message: 'unauthorized access '})
-    }
-    try {
-      const userInfo = await getAuth().verifyIdToken(token);
-      console.log('after validation', userInfo);
-      next()
-      
-    } catch {
-      return res.status(401).send({message: 'unauthorized access '})
-    }
-}
+ 
 
 // connect to mongo db
 const uri =
@@ -55,6 +39,28 @@ app.get("/", (req, res) => {
   res.send("Your server is ok");
 });
 
+const verifyFirebaseToken = async(req, res, next)=>{
+  console.log('in the middleware', req.headers);
+  const authorization = req.headers.authorization;
+  if(!authorization){
+    return res.status(401).send({message: 'unauthorized access'})
+  }
+  
+  const token = authorization.split(' ')[1];
+  if(!token){
+    return res.status(401).send({message: 'unauthorized access'})
+  }
+  // verify token
+  try{
+    const userInfo = await getAuth().verifyIdToken(token);
+    req.user = userInfo;
+    next()
+  }
+  catch{
+    return res.status(401).send({message: 'unauthorized access'})
+  }
+}
+
 async function run() {
   try {
     await client.connect();
@@ -67,6 +73,8 @@ async function run() {
     const productsCollection = db.collection("products");
     const bidsCollection = db.collection("bids");
     const usersCollection = db.collection("users");
+
+    
 
     // create user into db
     app.post("/users", async (req, res) => {
@@ -183,6 +191,9 @@ async function run() {
       const email = req.query.email;
       const query = {};
       if (email) {
+        if(email !== req.user.email){
+          return res.status(403).send({message: 'Forbidden access'})
+        }
         query.buyer_email = email;
       }
       const cursor = bidsCollection.find(query);
