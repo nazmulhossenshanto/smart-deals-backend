@@ -8,7 +8,7 @@ dotenv.config();
 import admin, { cert } from "firebase-admin";
 import { getAuth } from "firebase-admin/auth";
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 10000;
 
 const serviceAccount = JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_KEY, "base64").toString("utf-8"))
 
@@ -225,9 +225,9 @@ async function run() {
       res.send(result);
     });
 
-    // app.listen(port, () => {
-    //   console.log(`server is running on port : ${port}`);
-    // });
+   app.listen(port, "0.0.0.0", () => {
+  console.log(`server is running on port : ${port}`);
+});
   } finally {
   }
 }
