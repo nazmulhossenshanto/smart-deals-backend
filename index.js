@@ -6,10 +6,12 @@ const app = express();
 import dotenv from "dotenv";
 dotenv.config();
 import admin, { cert } from "firebase-admin";
+import { getAuth } from "firebase-admin/auth";
+
 const port = process.env.PORT || 3000;
 
-import serviceAccount from "./firebase-admin-key.json" with { type: "json" };
-import { getAuth } from "firebase-admin/auth";
+const serviceAccount = JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_KEY, "base64").toString("utf-8"))
+
 admin.initializeApp({
   credential: cert(serviceAccount),
 });
@@ -58,7 +60,7 @@ const verifyFirebaseToken = async (req, res, next) => {
 async function run() {
   try {
     await client.connect();
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!",
     );
@@ -223,9 +225,9 @@ async function run() {
       res.send(result);
     });
 
-    app.listen(port, () => {
-      console.log(`server is running on port : ${port}`);
-    });
+    // app.listen(port, () => {
+    //   console.log(`server is running on port : ${port}`);
+    // });
   } finally {
   }
 }
