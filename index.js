@@ -18,10 +18,7 @@ admin.initializeApp({
 app.use(cors());
 app.use(json());
 
-const logger = (req, res, next) => {
-  console.log("logging information");
-  next();
-};
+ 
 
 // connect to mongo db
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.pnssve1.mongodb.net/?appName=Cluster0`;
@@ -232,3 +229,6 @@ async function run() {
   }
 }
 run().catch(console.dir);
+
+
+export default app;
